@@ -4,14 +4,7 @@ use crate::{Config, EventHandler, low_level_handler};
 use std::error::Error;
 use gamesense::handler::Handler;
 use serde::Serialize;
-use crate::data::Key;
-
-#[derive(Serialize)]
-struct GameSenseColor {
-    red: u8,
-    green: u8,
-    blue: u8
-}
+use crate::data::{Color, Key};
 
 #[derive(Serialize)]
 struct GameSenseColorHandler {
@@ -19,7 +12,7 @@ struct GameSenseColorHandler {
     device_type: String,
     #[serde(rename = "custom-zone-keys")]
     custom_zone_keys: Vec<u32>,
-    color: GameSenseColor,
+    color: Color,
     mode: String
 }
 
@@ -50,11 +43,7 @@ impl KeyboardEventsHandler {
                 custom_zone_keys: vec![
                     mode_switch_key.hid_code()
                 ],
-                color: GameSenseColor {
-                    red: 255,
-                    green: 0,
-                    blue: 0
-                },
+                color: config.indicator_color().clone(),
                 mode: "color".to_string()
             }
         ])?;
@@ -71,11 +60,7 @@ impl KeyboardEventsHandler {
                 GameSenseColorHandler {
                     device_type: "keyboard".to_string(),
                     custom_zone_keys: event_hid_codes,
-                    color: GameSenseColor {
-                        red: 0,
-                        green: 255,
-                        blue: 0
-                    },
+                    color: config.macros_color().clone(),
                     mode: "color".to_string()
                 }
             ])?;

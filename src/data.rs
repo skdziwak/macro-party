@@ -6,7 +6,17 @@ use serde_json::Result;
 pub struct Config {
     key_definitions: Vec<Key>,
     mode_switch_key: String,
-    events: Vec<Event>
+    events: Vec<Event>,
+    background_color: Color,
+    indicator_color: Color,
+    macros_color: Color
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct Color {
+    red: u8,
+    green: u8,
+    blue: u8
 }
 
 impl Config {
@@ -18,6 +28,15 @@ impl Config {
     }
     pub fn events(&self) -> &Vec<Event> {
         &self.events
+    }
+    pub fn background_color(&self) -> &Color {
+        &self.background_color
+    }
+    pub fn indicator_color(&self) -> &Color {
+        &self.indicator_color
+    }
+    pub fn macros_color(&self) -> &Color {
+        &self.macros_color
     }
 }
 
