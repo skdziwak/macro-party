@@ -84,7 +84,8 @@ impl Event {
 #[derive(Serialize, Deserialize, Clone)]
 pub enum ActionType {
     Wait,
-    Click,
+    LeftClick,
+    RightClick,
     Key,
     KeyDown,
     KeyUp

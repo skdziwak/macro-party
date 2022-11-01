@@ -118,7 +118,7 @@ impl KeyboardEventsHandler {
             let actions = events_map_arc.get(&code).expect("Cannot find actions");
             for action in actions {
                 if execute_action(action, keymap_arc.as_ref()).is_none() {
-                    println!("WARN: Action interrupted");
+                    println!("WARN: Action interrupted. One of required fields is empty.");
                     break;
                 }
             }
@@ -131,7 +131,12 @@ fn execute_action(action: &Action, keymap: &HashMap<String, VkCode>) -> Option<(
         ActionType::Wait => {
             thread::sleep(Duration::from_millis(action.duration()?))
         }
-        ActionType::Click => {}
+        ActionType::LeftClick => {
+            robot::left_click(action.x()?, action.y()?);
+        }
+        ActionType::RightClick => {
+            robot::right_click(action.x()?, action.y()?);
+        }
         ActionType::Key => {
             let key = action.key().as_ref()?;
             let code = keymap.get(key)?;
