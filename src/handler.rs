@@ -12,8 +12,19 @@ struct GameSenseColorHandler {
     device_type: String,
     #[serde(rename = "custom-zone-keys")]
     custom_zone_keys: Vec<u32>,
-    color: Color,
+    color: GameSenseColor,
     mode: String
+}
+
+#[derive(Serialize)]
+struct GameSenseColor {
+    gradient: GameSenseColorGradient
+}
+
+#[derive(Serialize)]
+struct GameSenseColorGradient {
+    zero: Color,
+    hundred: Color
 }
 
 pub struct KeyboardEventsHandler {
@@ -43,7 +54,12 @@ impl KeyboardEventsHandler {
                 custom_zone_keys: vec![
                     mode_switch_key.hid_code()
                 ],
-                color: config.indicator_color().clone(),
+                color: GameSenseColor {
+                    gradient: GameSenseColorGradient {
+                        zero: config.disabled_indicator_color().clone(),
+                        hundred: config.indicator_color().clone()
+                    }
+                },
                 mode: "color".to_string()
             }
         ])?;
@@ -60,11 +76,16 @@ impl KeyboardEventsHandler {
                 GameSenseColorHandler {
                     device_type: "keyboard".to_string(),
                     custom_zone_keys: event_hid_codes,
-                    color: config.macros_color().clone(),
+                    color: GameSenseColor {
+                        gradient: GameSenseColorGradient {
+                            zero: config.background_color().clone(),
+                            hundred: config.macros_color().clone()
+                        }
+                    },
                     mode: "color".to_string()
                 }
             ])?;
-            game_sense.trigger_event("EVENTS", 1)?;
+            game_sense.trigger_event("EVENTS", 0)?;
         }
         game_sense.trigger_event("INDICATOR", 0)?;
 
@@ -97,10 +118,12 @@ impl EventHandler for KeyboardEventsHandler {
             match self.enabled {
                 true => {
                     self.game_sense.trigger_event("INDICATOR", 0).expect("Cannot send keyboard event");
+                    self.game_sense.trigger_event("EVENTS", 0).expect("Cannot send keyboard event");
                     self.enabled = false;
                 }
                 false => {
-                    self.game_sense.trigger_event("INDICATOR", 1).expect("Cannot send keyboard event");
+                    self.game_sense.trigger_event("INDICATOR", 100).expect("Cannot send keyboard event");
+                    self.game_sense.trigger_event("EVENTS", 100).expect("Cannot send keyboard event");
                     self.enabled = true;
                 }
             }

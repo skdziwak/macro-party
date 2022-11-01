@@ -9,6 +9,7 @@ pub struct Config {
     events: Vec<Event>,
     background_color: Color,
     indicator_color: Color,
+    disabled_indicator_color: Color,
     macros_color: Color
 }
 
@@ -37,6 +38,9 @@ impl Config {
     }
     pub fn macros_color(&self) -> &Color {
         &self.macros_color
+    }
+    pub fn disabled_indicator_color(&self) -> &Color {
+        &self.disabled_indicator_color
     }
 }
 
