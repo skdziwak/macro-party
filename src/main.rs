@@ -13,7 +13,7 @@ fn main() {
     let result = fs::read_to_string("config.json").expect("Cannot read config.json");
     let config: Config = serde_json::from_str(result.as_str()).expect("Cannot deserialize config");
 
-    let mut game_sense = GameSenseClient::new("MACRO_PARTY", "Macro party", "skdziwak", None)
+    let game_sense = GameSenseClient::new("MACRO_PARTY", "Macro party", "skdziwak", None)
         .expect("Cannot connect to GameSense");
 
     let handler = KeyboardEventsHandler::new(game_sense, config).expect("Error occurred during creating keyboard events handler");

@@ -1,7 +1,6 @@
 use std::mem::size_of;
 use std::thread;
 use std::time::Duration;
-use windows::Win32::Foundation::INPUT_E_FRAME;
 use windows::Win32::UI::Input::KeyboardAndMouse::{INPUT, INPUT_0, INPUT_KEYBOARD, INPUT_MOUSE, KEYBD_EVENT_FLAGS, KEYBDINPUT, MOUSE_EVENT_FLAGS, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEINPUT, SendInput, VIRTUAL_KEY};
 use windows::Win32::UI::WindowsAndMessaging::{GetMessageExtraInfo, GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 use crate::low_level_handler::VkCode;

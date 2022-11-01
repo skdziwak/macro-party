@@ -1,5 +1,4 @@
 use serde::{Serialize, Deserialize};
-use serde_json::Result;
 use crate::low_level_handler::VkCode;
 
 #[derive(Serialize, Deserialize)]

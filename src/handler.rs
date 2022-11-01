@@ -1,7 +1,6 @@
-use std::borrow::Borrow;
 use std::collections::HashMap;
 use gamesense::client::GameSenseClient;
-use crate::{Config, EventHandler, low_level_handler};
+use crate::{Config, EventHandler};
 use std::error::Error;
 use std::thread;
 use std::time::Duration;
@@ -34,7 +33,6 @@ struct GameSenseColorGradient {
 
 pub struct KeyboardEventsHandler {
     game_sense: GameSenseClient,
-    config: Config,
     mode_switch_vk: VkCode,
     enabled: bool,
     events_map: std::sync::Arc<HashMap<VkCode, Vec<Action>>>,
@@ -46,7 +44,7 @@ impl Handler for GameSenseColorHandler {
 }
 
 impl KeyboardEventsHandler {
-    pub fn new(mut game_sense: GameSenseClient, mut config: Config) -> Result<Self, Box<dyn Error>> {
+    pub fn new(mut game_sense: GameSenseClient, config: Config) -> Result<Self, Box<dyn Error>> {
         game_sense.start_heartbeat();
         let mut keys_by_names: HashMap<&str, &Key> = HashMap::new();
         let mut key_map: HashMap<String, VkCode> = HashMap::new();
@@ -103,7 +101,6 @@ impl KeyboardEventsHandler {
 
         Ok(Self {
             game_sense,
-            config,
             mode_switch_vk,
             enabled: false,
             events_map: std::sync::Arc::new(events_map),
