@@ -1,28 +1,22 @@
+use std::fs;
+use gamesense::client::GameSenseClient;
+use crate::data::Config;
+use crate::handler::Handler;
 use crate::low_level_handler::EventHandler;
 
 mod low_level_handler;
-
-struct Handler {
-
-}
-
-impl EventHandler for Handler {
-    fn key_pressed(&self, code: low_level_handler::VkCode) -> bool {
-        println!("Pressed {0}", code);
-        return true;
-    }
-
-    fn key_released(&self, code: low_level_handler::VkCode) -> bool {
-        println!("Released {0}", code);
-        return false;
-    }
-}
+mod data;
+mod handler;
 
 
 fn main() {
-    let handler = Handler{
+    let result = fs::read_to_string("config.json").expect("Cannot read config.json");
+    let config: Config = serde_json::from_str(result.as_str()).expect("Cannot deserialize config");
 
-    };
+    let mut game_sense = GameSenseClient::new("MACRO_PARTY", "Macro party", "skdziwak", None)
+        .expect("Cannot connect to GameSense");
+
+    let handler = Handler::new(game_sense, config);
     let handler_box: Box<dyn EventHandler> = Box::from(handler);
     low_level_handler::run(handler_box);
 }
