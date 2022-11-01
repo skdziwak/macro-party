@@ -6,7 +6,7 @@ use std::thread;
 use std::time::Duration;
 use gamesense::handler::Handler;
 use serde::Serialize;
-use crate::data::{Action, ActionType, Color, Key};
+use crate::data::{Action, ActionType, Color, Key, Mode};
 use crate::low_level_handler::VkCode;
 use crate::robot;
 
@@ -36,7 +36,8 @@ pub struct KeyboardEventsHandler {
     mode_switch_vk: VkCode,
     enabled: bool,
     events_map: std::sync::Arc<HashMap<VkCode, Vec<Action>>>,
-    key_map: std::sync::Arc<HashMap<String, VkCode>>
+    key_map: std::sync::Arc<HashMap<String, VkCode>>,
+    mode: Mode
 }
 
 impl Handler for GameSenseColorHandler {
@@ -104,7 +105,8 @@ impl KeyboardEventsHandler {
             mode_switch_vk,
             enabled: false,
             events_map: std::sync::Arc::new(events_map),
-            key_map: std::sync::Arc::new(key_map)
+            key_map: std::sync::Arc::new(key_map),
+            mode: config.mode().clone()
         })
     }
 
@@ -164,19 +166,20 @@ impl Drop for KeyboardEventsHandler {
 impl EventHandler for KeyboardEventsHandler {
     fn key_pressed(&mut self, code: VkCode) -> bool {
         if code == self.mode_switch_vk {
-            match self.enabled {
-                true => {
+            match (&self.mode, self.enabled) {
+                (Mode::Toggle, true) => {
                     self.game_sense.trigger_event("INDICATOR", 0).expect("Cannot send keyboard event");
                     self.game_sense.trigger_event("EVENTS", 0).expect("Cannot send keyboard event");
                     self.enabled = false;
                     println!("Disabled macro mode");
                 }
-                false => {
+                (_, false) => {
                     self.game_sense.trigger_event("INDICATOR", 100).expect("Cannot send keyboard event");
                     self.game_sense.trigger_event("EVENTS", 100).expect("Cannot send keyboard event");
                     self.enabled = true;
                     println!("Enabled macro mode");
                 }
+                _ => {}
             }
             return true;
         }
@@ -188,6 +191,14 @@ impl EventHandler for KeyboardEventsHandler {
 
     fn key_released(&mut self, code: VkCode) -> bool {
         if code == self.mode_switch_vk {
+            match (&self.mode, self.enabled) {
+                (Mode::Hold, true) => {
+                    self.game_sense.trigger_event("INDICATOR", 0).expect("Cannot send keyboard event");
+                    self.game_sense.trigger_event("EVENTS", 0).expect("Cannot send keyboard event");
+                    self.enabled = false;
+                    println!("Disabled macro mode");
+                }, _ => {}
+            }
             return true;
         }
         if self.enabled && self.events_map.contains_key(&code) {

@@ -10,7 +10,8 @@ pub struct Config {
     background_color: Color,
     indicator_color: Color,
     disabled_indicator_color: Color,
-    macros_color: Color
+    macros_color: Color,
+    mode: Mode
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -41,6 +42,9 @@ impl Config {
     }
     pub fn disabled_indicator_color(&self) -> &Color {
         &self.disabled_indicator_color
+    }
+    pub fn mode(&self) -> &Mode {
+        &self.mode
     }
 }
 
@@ -88,6 +92,11 @@ pub enum ActionType {
     Key,
     KeyDown,
     KeyUp
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum Mode {
+    Toggle, Hold
 }
 
 #[derive(Serialize, Deserialize, Clone)]
