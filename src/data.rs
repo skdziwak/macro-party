@@ -1,5 +1,6 @@
 use serde::{Serialize, Deserialize};
 use serde_json::Result;
+use crate::low_level_handler::VkCode;
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -47,13 +48,13 @@ impl Config {
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Key {
-    vk_code: u32,
+    vk_code: VkCode,
     hid_code: u32,
     name: String
 }
 
 impl Key {
-    pub fn vk_code(&self) -> u32 {
+    pub fn vk_code(&self) -> VkCode {
         self.vk_code
     }
     pub fn hid_code(&self) -> u32 {
@@ -93,7 +94,7 @@ pub enum ActionType {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Action {
     action_type: ActionType,
-    duration: Option<i32>,
+    duration: Option<u64>,
     key: Option<String>,
     x: Option<i32>,
     y: Option<i32>
@@ -103,7 +104,7 @@ impl Action {
     pub fn action_type(&self) -> &ActionType {
         &self.action_type
     }
-    pub fn duration(&self) -> Option<i32> {
+    pub fn duration(&self) -> Option<u64> {
         self.duration
     }
     pub fn key(&self) -> &Option<String> {

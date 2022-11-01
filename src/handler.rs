@@ -4,10 +4,12 @@ use gamesense::client::GameSenseClient;
 use crate::{Config, EventHandler, low_level_handler};
 use std::error::Error;
 use std::thread;
+use std::time::Duration;
 use gamesense::handler::Handler;
 use serde::Serialize;
-use crate::data::{Action, Color, Key};
+use crate::data::{Action, ActionType, Color, Key};
 use crate::low_level_handler::VkCode;
+use crate::robot;
 
 #[derive(Serialize)]
 struct GameSenseColorHandler {
@@ -33,9 +35,10 @@ struct GameSenseColorGradient {
 pub struct KeyboardEventsHandler {
     game_sense: GameSenseClient,
     config: Config,
-    mode_switch_vk: u32,
+    mode_switch_vk: VkCode,
     enabled: bool,
-    events_map: std::sync::Arc<HashMap<VkCode, Vec<Action>>>
+    events_map: std::sync::Arc<HashMap<VkCode, Vec<Action>>>,
+    key_map: std::sync::Arc<HashMap<String, VkCode>>
 }
 
 impl Handler for GameSenseColorHandler {
@@ -46,9 +49,11 @@ impl KeyboardEventsHandler {
     pub fn new(mut game_sense: GameSenseClient, mut config: Config) -> Result<Self, Box<dyn Error>> {
         game_sense.start_heartbeat();
         let mut keys_by_names: HashMap<&str, &Key> = HashMap::new();
+        let mut key_map: HashMap<String, VkCode> = HashMap::new();
 
         for key in config.key_definitions() {
             keys_by_names.insert(key.name(), key);
+            key_map.insert(key.name().to_string(), key.vk_code());
         }
         let mode_switch_key = keys_by_names.get(config.mode_switch_key()).expect("Cannot find mode switch key");
         let mode_switch_vk = mode_switch_key.vk_code();
@@ -101,23 +106,50 @@ impl KeyboardEventsHandler {
             config,
             mode_switch_vk,
             enabled: false,
-            events_map: std::sync::Arc::new(events_map)
+            events_map: std::sync::Arc::new(events_map),
+            key_map: std::sync::Arc::new(key_map)
         })
     }
 
     fn execute_actions(&self, code: VkCode) {
         let events_map_arc = self.events_map.clone();
+        let keymap_arc = self.key_map.clone();
         thread::spawn(move || {
             let actions = events_map_arc.get(&code).expect("Cannot find actions");
             for action in actions {
-                execute_action(action);
+                if execute_action(action, keymap_arc.as_ref()).is_none() {
+                    println!("WARN: Action interrupted");
+                    break;
+                }
             }
         });
     }
 }
 
-fn execute_action(action: &Action) {
-
+fn execute_action(action: &Action, keymap: &HashMap<String, VkCode>) -> Option<()> {
+    match action.action_type() {
+        ActionType::Wait => {
+            thread::sleep(Duration::from_millis(action.duration()?))
+        }
+        ActionType::Click => {}
+        ActionType::Key => {
+            let key = action.key().as_ref()?;
+            let code = keymap.get(key)?;
+            robot::press_key(code.clone());
+            robot::release_key(code.clone());
+        }
+        ActionType::KeyDown => {
+            let key = action.key().as_ref()?;
+            let code = keymap.get(key)?;
+            robot::press_key(code.clone());
+        }
+        ActionType::KeyUp => {
+            let key = action.key().as_ref()?;
+            let code = keymap.get(key)?;
+            robot::release_key(code.clone());
+        }
+    }
+    Some(())
 }
 
 impl Drop for KeyboardEventsHandler {
@@ -158,7 +190,6 @@ impl EventHandler for KeyboardEventsHandler {
         }
         if self.enabled && self.events_map.contains_key(&code) {
             self.execute_actions(code);
-            println!("Executing actions of {0}", code);
             return true;
         }
         return false;

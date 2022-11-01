@@ -7,7 +7,7 @@ use crate::low_level_handler::EventHandler;
 mod low_level_handler;
 mod data;
 mod handler;
-
+mod robot;
 
 fn main() {
     let result = fs::read_to_string("config.json").expect("Cannot read config.json");
