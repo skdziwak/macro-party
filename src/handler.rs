@@ -162,16 +162,6 @@ impl Drop for KeyboardEventsHandler {
 impl EventHandler for KeyboardEventsHandler {
     fn key_pressed(&mut self, code: VkCode) -> bool {
         if code == self.mode_switch_vk {
-            return true;
-        }
-        if self.enabled && self.events_map.contains_key(&code) {
-            return true;
-        }
-        return false;
-    }
-
-    fn key_released(&mut self, code: VkCode) -> bool {
-        if code == self.mode_switch_vk {
             match self.enabled {
                 true => {
                     self.game_sense.trigger_event("INDICATOR", 0).expect("Cannot send keyboard event");
@@ -186,6 +176,16 @@ impl EventHandler for KeyboardEventsHandler {
                     println!("Enabled macro mode");
                 }
             }
+            return true;
+        }
+        if self.enabled && self.events_map.contains_key(&code) {
+            return true;
+        }
+        return false;
+    }
+
+    fn key_released(&mut self, code: VkCode) -> bool {
+        if code == self.mode_switch_vk {
             return true;
         }
         if self.enabled && self.events_map.contains_key(&code) {
