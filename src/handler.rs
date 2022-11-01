@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use gamesense::client::GameSenseClient;
 use crate::{Config, EventHandler, low_level_handler};
 use std::error::Error;
+use std::thread;
 use gamesense::handler::Handler;
 use serde::Serialize;
 use crate::data::{Action, Color, Key};
@@ -34,7 +35,7 @@ pub struct KeyboardEventsHandler {
     config: Config,
     mode_switch_vk: u32,
     enabled: bool,
-    events_map: HashMap<VkCode, Vec<Action>>
+    events_map: std::sync::Arc<HashMap<VkCode, Vec<Action>>>
 }
 
 impl Handler for GameSenseColorHandler {
@@ -100,9 +101,23 @@ impl KeyboardEventsHandler {
             config,
             mode_switch_vk,
             enabled: false,
-            events_map
+            events_map: std::sync::Arc::new(events_map)
         })
     }
+
+    fn execute_actions(&self, code: VkCode) {
+        let events_map_arc = self.events_map.clone();
+        thread::spawn(move || {
+            let actions = events_map_arc.get(&code).expect("Cannot find actions");
+            for action in actions {
+                execute_action(action);
+            }
+        });
+    }
+}
+
+fn execute_action(action: &Action) {
+
 }
 
 impl Drop for KeyboardEventsHandler {
@@ -111,10 +126,6 @@ impl Drop for KeyboardEventsHandler {
     }
 }
 
-fn execute_actions(actions: &Vec<Action>) -> Result<(), Box<dyn Error>> {
-
-    Ok(())
-}
 
 impl EventHandler for KeyboardEventsHandler {
     fn key_pressed(&mut self, code: VkCode) -> bool {
@@ -145,12 +156,10 @@ impl EventHandler for KeyboardEventsHandler {
             }
             return true;
         }
-        if self.enabled {
-            if let Some(actions) = self.events_map.get(&code) {
-                println!("Executing actions of {0}", code);
-                execute_actions(actions).expect("Cannot execute actions");
-                return true;
-            }
+        if self.enabled && self.events_map.contains_key(&code) {
+            self.execute_actions(code);
+            println!("Executing actions of {0}", code);
+            return true;
         }
         return false;
     }
