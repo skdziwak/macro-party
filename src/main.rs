@@ -1,7 +1,7 @@
 use std::fs;
 use gamesense::client::GameSenseClient;
 use crate::data::Config;
-use crate::handler::Handler;
+use crate::handler::KeyboardEventsHandler;
 use crate::low_level_handler::EventHandler;
 
 mod low_level_handler;
@@ -16,7 +16,7 @@ fn main() {
     let mut game_sense = GameSenseClient::new("MACRO_PARTY", "Macro party", "skdziwak", None)
         .expect("Cannot connect to GameSense");
 
-    let handler = Handler::new(game_sense, config);
+    let handler = KeyboardEventsHandler::new(game_sense, config).expect("Error occurred during creating keyboard events handler");
     let handler_box: Box<dyn EventHandler> = Box::from(handler);
     low_level_handler::run(handler_box);
 }
