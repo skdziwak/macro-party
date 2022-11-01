@@ -1,10 +1,12 @@
+use std::borrow::Borrow;
 use std::collections::HashMap;
 use gamesense::client::GameSenseClient;
 use crate::{Config, EventHandler, low_level_handler};
 use std::error::Error;
 use gamesense::handler::Handler;
 use serde::Serialize;
-use crate::data::{Color, Key};
+use crate::data::{Action, Color, Key};
+use crate::low_level_handler::VkCode;
 
 #[derive(Serialize)]
 struct GameSenseColorHandler {
@@ -31,7 +33,8 @@ pub struct KeyboardEventsHandler {
     game_sense: GameSenseClient,
     config: Config,
     mode_switch_vk: u32,
-    enabled: bool
+    enabled: bool,
+    events_map: HashMap<VkCode, Vec<Action>>
 }
 
 impl Handler for GameSenseColorHandler {
@@ -65,10 +68,13 @@ impl KeyboardEventsHandler {
         ])?;
 
         let mut event_hid_codes: Vec<u32> = Vec::new();
+        let mut events_map: HashMap<VkCode, Vec<Action>> = HashMap::new();
 
         for event in config.events() {
             let key = keys_by_names.get(event.key()).expect("Cannot find key");
             event_hid_codes.push(key.hid_code());
+
+            events_map.insert(key.vk_code(), event.actions().clone());
         }
 
         if !event_hid_codes.is_empty() {
@@ -93,7 +99,8 @@ impl KeyboardEventsHandler {
             game_sense,
             config,
             mode_switch_vk,
-            enabled: false
+            enabled: false,
+            events_map
         })
     }
 }
@@ -104,32 +111,47 @@ impl Drop for KeyboardEventsHandler {
     }
 }
 
+fn execute_actions(actions: &Vec<Action>) -> Result<(), Box<dyn Error>> {
+
+    Ok(())
+}
+
 impl EventHandler for KeyboardEventsHandler {
-    fn key_pressed(&mut self, code: low_level_handler::VkCode) -> bool {
+    fn key_pressed(&mut self, code: VkCode) -> bool {
         if code == self.mode_switch_vk {
             return true;
         }
-        println!("Pressed {0}", code);
+        if self.enabled && self.events_map.contains_key(&code) {
+            return true;
+        }
         return false;
     }
 
-    fn key_released(&mut self, code: low_level_handler::VkCode) -> bool {
+    fn key_released(&mut self, code: VkCode) -> bool {
         if code == self.mode_switch_vk {
             match self.enabled {
                 true => {
                     self.game_sense.trigger_event("INDICATOR", 0).expect("Cannot send keyboard event");
                     self.game_sense.trigger_event("EVENTS", 0).expect("Cannot send keyboard event");
                     self.enabled = false;
+                    println!("Disabled macro mode");
                 }
                 false => {
                     self.game_sense.trigger_event("INDICATOR", 100).expect("Cannot send keyboard event");
                     self.game_sense.trigger_event("EVENTS", 100).expect("Cannot send keyboard event");
                     self.enabled = true;
+                    println!("Enabled macro mode");
                 }
             }
             return true;
         }
-        println!("Released {0}", code);
+        if self.enabled {
+            if let Some(actions) = self.events_map.get(&code) {
+                println!("Executing actions of {0}", code);
+                execute_actions(actions).expect("Cannot execute actions");
+                return true;
+            }
+        }
         return false;
     }
 }

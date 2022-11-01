@@ -80,7 +80,7 @@ impl Event {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum ActionType {
     Wait,
     Click,
@@ -89,7 +89,7 @@ pub enum ActionType {
     KeyUp
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Action {
     action_type: ActionType,
