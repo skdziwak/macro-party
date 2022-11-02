@@ -1,4 +1,4 @@
-use std::fs;
+use std::{env, fs};
 use gamesense::client::GameSenseClient;
 use crate::data::Config;
 use crate::handler::KeyboardEventsHandler;
@@ -10,7 +10,9 @@ mod handler;
 mod robot;
 
 fn main() {
-    let result = fs::read_to_string("config.json").expect("Cannot read config.json");
+    let args: Vec<String> = env::args().collect();
+    let config_path = args.get(1).expect("Usage macro_party config.json");
+    let result = fs::read_to_string(config_path).expect("Cannot read config.json");
     let config: Config = serde_json::from_str(result.as_str()).expect("Cannot deserialize config");
 
     let game_sense = GameSenseClient::new("MACRO_PARTY", "Macro party", "skdziwak", None)
